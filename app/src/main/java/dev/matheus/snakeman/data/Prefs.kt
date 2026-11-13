@@ -16,6 +16,11 @@ class Prefs(context: Context) {
         get() = if (prefs.getBoolean(KEY_WRAP, false)) WallMode.WRAP else WallMode.SOLID
         set(value) = prefs.edit().putBoolean(KEY_WRAP, value == WallMode.WRAP).apply()
 
+    /** Música de fundo ligada por padrão; o jogador pode desligar no menu ou na pausa. */
+    var musicEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MUSIC, true)
+        set(value) = prefs.edit().putBoolean(KEY_MUSIC, value).apply()
+
     /** Top 5 partidas, da maior pontuação para a menor. */
     var scores: List<ScoreEntry>
         get() = ScoreBoard.decode(prefs.getString(KEY_SCORES, null))
@@ -36,5 +41,6 @@ class Prefs(context: Context) {
         const val KEY_HIGH_SCORE = "high_score"
         const val KEY_WRAP = "wrap_mode"
         const val KEY_SCORES = "scores"
+        const val KEY_MUSIC = "music_enabled"
     }
 }

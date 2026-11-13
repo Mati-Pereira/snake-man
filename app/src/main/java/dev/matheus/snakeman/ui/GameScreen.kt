@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import dev.matheus.snakeman.audio.Feedback
+import dev.matheus.snakeman.audio.MusicPlayer
 import dev.matheus.snakeman.data.Prefs
 import dev.matheus.snakeman.data.ScoreEntry
 import dev.matheus.snakeman.game.Direction
@@ -70,6 +71,7 @@ fun SnakeManApp() {
     val prefs = remember { Prefs(context) }
     val engine = remember { SnakeEngine() }
     val feedback = remember { Feedback(context) }
+    val music = remember { MusicPlayer(context) }
 
     var snapshot by remember { mutableStateOf(engine.snapshot()) }
     var highScore by remember { mutableIntStateOf(prefs.highScore) }
@@ -78,14 +80,13 @@ fun SnakeManApp() {
     var boardFull by remember { mutableStateOf(false) }
     var menuMode by remember { mutableStateOf(prefs.wallMode) }
     var showScores by remember { mutableStateOf(false) }
+    var musicEnabled by remember { mutableStateOf(prefs.musicEnabled) }
 
     DisposableEffect(Unit) {
-        onDispose { feedback.release() }
-    }
-
-    if (showScores) {
-        ScoresScreen(entries = scores, onBack = { showScores = false })
-        return
+        onDispose {
+            music.release()
+            feedback.release()
+        }
     }
 
     val startGame: (WallMode) -> Unit = { mode ->
@@ -137,7 +138,7 @@ fun SnakeManApp() {
 
                 TickOutcome.WON -> {
                     boardFull = true
-                    feedback.death()
+                    feedback.win()
                     snapshot = engine.snapshot()
                     break
                 }
@@ -148,22 +149,38 @@ fun SnakeManApp() {
         }
     }
 
-    // Recorde + placar de recordes.
+    // Música e placar acompanham o estado da partida.
     LaunchedEffect(snapshot.status) {
-        if (snapshot.status != GameStatus.GAME_OVER) return@LaunchedEffect
-        val previousBest = prefs.highScore
-        if (snapshot.score > previousBest) {
-            prefs.highScore = snapshot.score
-            highScore = snapshot.score
-            newRecord = true
-            feedback.fanfare()
-        }
-        if (snapshot.score > 0) {
-            scores = prefs.registerScore(
-                score = snapshot.score,
-                mode = snapshot.wallMode,
-                timestamp = System.currentTimeMillis()
-            )
+        when (snapshot.status) {
+            GameStatus.PLAYING -> {
+                if (musicEnabled) music.playGameLoop() else music.stop()
+            }
+
+            GameStatus.PAUSED -> music.pause()
+
+            GameStatus.MENU -> music.stop()
+
+            GameStatus.GAME_OVER -> {
+                val newBest = snapshot.score > prefs.highScore
+                if (newBest) {
+                    prefs.highScore = snapshot.score
+                    highScore = snapshot.score
+                    newRecord = true
+                }
+                if (snapshot.score > 0) {
+                    scores = prefs.registerScore(
+                        score = snapshot.score,
+                        mode = snapshot.wallMode,
+                        timestamp = System.currentTimeMillis()
+                    )
+                }
+
+                if (musicEnabled) {
+                    if (boardFull) music.playVictory() else music.playGameOver(newBest)
+                } else {
+                    music.stop()
+                }
+            }
         }
     }
 
@@ -173,6 +190,7 @@ fun SnakeManApp() {
             engine.pause()
             snapshot = engine.snapshot()
         }
+        music.pause()
     }
 
     // Mantém a tela ligada durante a partida.
@@ -183,6 +201,24 @@ fun SnakeManApp() {
     }
 
     val steer: (Direction) -> Unit = { engine.queueDirection(it) }
+
+    val toggleMusic: () -> Unit = {
+        musicEnabled = !musicEnabled
+        prefs.musicEnabled = musicEnabled
+        if (!musicEnabled) {
+            music.stop()
+        } else if (snapshot.status == GameStatus.PLAYING) {
+            music.playGameLoop()
+        }
+        feedback.click()
+    }
+
+    // O placar tem tela própria, mas os efeitos acima continuam vivos para não
+    // registrar a mesma partida duas vezes ao voltar.
+    if (showScores) {
+        ScoresScreen(entries = scores, onBack = { showScores = false })
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -220,6 +256,8 @@ fun SnakeManApp() {
                     GameStatus.MENU -> MenuOverlay(
                         mode = menuMode,
                         highScore = highScore,
+                        musicEnabled = musicEnabled,
+                        onToggleMusic = toggleMusic,
                         onModeChange = { menuMode = it },
                         onPlay = { startGame(menuMode) },
                         onScores = { showScores = true }
@@ -227,6 +265,8 @@ fun SnakeManApp() {
 
                     GameStatus.PAUSED -> PausedOverlay(
                         score = snapshot.score,
+                        musicEnabled = musicEnabled,
+                        onToggleMusic = toggleMusic,
                         onResume = resumeGame,
                         onRestart = { startGame(menuMode) },
                         onMenu = backToMenu
@@ -345,6 +385,8 @@ private fun ControlBar(
 private fun MenuOverlay(
     mode: WallMode,
     highScore: Int,
+    musicEnabled: Boolean,
+    onToggleMusic: () -> Unit,
     onModeChange: (WallMode) -> Unit,
     onPlay: () -> Unit,
     onScores: () -> Unit
@@ -377,6 +419,7 @@ private fun MenuOverlay(
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace
         )
+        MusicToggle(enabled = musicEnabled, onToggle = onToggleMusic)
         Spacer(Modifier.height(4.dp))
         ArcadeButton("JOGAR", onPlay, filled = true, width = 150.dp, height = 46.dp)
         ArcadeButton("RECORDES", onScores, width = 150.dp)
@@ -393,6 +436,8 @@ private fun MenuOverlay(
 @Composable
 private fun PausedOverlay(
     score: Int,
+    musicEnabled: Boolean,
+    onToggleMusic: () -> Unit,
     onResume: () -> Unit,
     onRestart: () -> Unit,
     onMenu: () -> Unit
@@ -412,6 +457,7 @@ private fun PausedOverlay(
             fontSize = 12.sp,
             fontFamily = FontFamily.Monospace
         )
+        MusicToggle(enabled = musicEnabled, onToggle = onToggleMusic)
         Spacer(Modifier.height(4.dp))
         ArcadeButton("CONTINUAR", onResume, filled = true, width = 170.dp)
         ArcadeButton("NOVO JOGO", onRestart, width = 170.dp)
@@ -525,6 +571,37 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
         Text(
             text = label,
             color = if (selected) Night else TextMuted,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace,
+            letterSpacing = 1.sp
+        )
+    }
+}
+
+@Composable
+private fun MusicToggle(enabled: Boolean, onToggle: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .background(BoardBg)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 11.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = "♪",
+            color = if (enabled) SnakeGreen else TextMuted,
+            fontSize = 14.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = if (enabled) "MÚSICA ON" else "MÚSICA OFF",
+            color = if (enabled) SnakeGreen else TextMuted,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,

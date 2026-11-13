@@ -3,14 +3,14 @@
 ![Platform](https://img.shields.io/badge/platform-Android%207.0%2B-3DDC84?logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202024.10-4285F4?logo=jetpackcompose&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-23%20passing-success)
+![Tests](https://img.shields.io/badge/tests-29%20passing-success)
 ![Release](https://img.shields.io/github/v/release/Mati-Pereira/snake-man?label=release)
 
 **[⬇️ Baixar o APK mais recente](https://github.com/Mati-Pereira/snake-man/releases/latest)** · Android 7.0+ · 6,3 MB
 
 Jogo da cobra (Snake) para Android, escrito em **Kotlin + Jetpack Compose**.
 Interface arcade escura, controle por swipe ou D-pad, maçã dourada com tempo,
-placar top 5, sons sintetizados e dois modos de borda.
+placar top 5, sons e trilha sonora sintetizados e dois modos de borda.
 
 O projeto foi pensado para ser simples de ler: **toda a lógica do jogo é Kotlin puro**
 (sem imports de Android), então ela roda em testes de JVM na velocidade de milissegundos,
@@ -23,9 +23,9 @@ e a UI é só uma projeção do estado do motor.
 | | |
 |---|---|
 | ![Menu](screenshots/menu.png) | ![Jogando](screenshots/gameplay.png) |
-| Menu: modo, jogar e recordes | Jogando: maçã dourada com anel de tempo |
+| Menu: modo, música, jogar e recordes | Jogando: maçã dourada com anel de tempo |
 | ![Pausa](screenshots/paused.png) | ![Recordes](screenshots/recordes.png) |
-| Pausa | Placar top 5 |
+| Pausa: música e controles | Placar top 5 |
 | ![Game over](screenshots/gameover.png) | |
 | Game over com novo recorde | |
 
@@ -62,6 +62,20 @@ Capturados no emulador Android 14 (Pixel 5, 1080×2340), build de release.
 Começa em **190 ms por passo** e acelera **6 ms** a cada maçã comida, com piso de
 **70 ms**. Em outras palavras: o jogo fica progressivamente mais difícil até estabilizar.
 
+### Trilha sonora
+
+A música é **original e gerada em tempo real**, sem nenhum arquivo de áudio:
+
+- **Partida** — loop de 32 s a 120 BPM em Lá menor, com arpejos de 16 avos,
+  baixo em oitavas, bateria four-on-the-floor e lead com eco: chiptune com
+  produção synthwave.
+- **Game over** — jingle descendente de ~6,6 s. Se a partida bateu o recorde,
+  entra uma fanfarra ascendente no final.
+- **Tabuleiro cheio** — jingle de vitória próprio.
+- **MÚSICA ON/OFF** no menu e na pausa, com a escolha salva entre sessões.
+- O loop emenda sem estalo; o player usa `AudioTrack` em streaming e respeita
+  foco de áudio (pausa ou abaixa quando outro app toca) e o app indo para segundo plano.
+
 ---
 
 ## ✨ Funcionalidades
@@ -78,8 +92,8 @@ Começa em **190 ms por passo** e acelera **6 ms** a cada maçã comida, com pis
 - **Sons sintetizados** sem nenhum asset de áudio:
   - maçã comum: bip curto
   - dourada: arpejo ascendente de 3 notas
-  - game over: 3 notas descendentes
-  - novo recorde: fanfarra
+  - clique curto nos botões
+- **Trilha chiptune/synthwave original** (detalhes na seção acima)
 - **Vibração** curta ao comer e ao morrer
 - **Tela sempre ligada** durante a partida
 - **Tema escuro** fixo, tipografia monoespaçada estilo arcade
@@ -98,7 +112,7 @@ Começa em **190 ms por passo** e acelera **6 ms** a cada maçã comida, com pis
 | SDK | compileSdk/targetSdk **35**, minSdk **24** (Android 7.0) |
 | Testes | JUnit 4 na JVM (sem Robolectric) |
 | Persistência | SharedPreferences |
-| Áudio | `ToneGenerator` (sons gerados em runtime) |
+| Áudio | Síntese própria: `ToneGenerator` (efeitos) + `AudioTrack` (trilha) |
 | Gráficos | `Canvas` do Compose (nada de imagens) |
 
 Nenhuma dependência além de AndroidX/Compose — sem libs de terceiros, sem assets
@@ -128,6 +142,8 @@ binários, sem serviços externos.
 │  data/                    │   │  audio/                     │
 │  Prefs.kt (SharedPrefs)   │   │  Feedback.kt (ToneGenerator │
 │  ScoreEntry.kt (top 5)    │   │  + Vibrator)                │
+│                           │   │  ChiptuneSynth.kt (PCM)     │
+│                           │   │  MusicPlayer.kt (streaming)  │
 └───────────────────────────┘   └─────────────────────────────┘
 ```
 
@@ -166,9 +182,12 @@ snakeman/
 │       │   │   │   ├── GameModels.kt # Direction, Cell, Apple, snapshot
 │       │   │   │   └── SnakeEngine.kt # regras do jogo
 │       │   │   ├── data/
-│       │   │   │   ├── Prefs.kt      # recorde, modo, placar
+│       │   │   │   ├── Prefs.kt      # recorde, modo, música, placar
 │       │   │   │   └── ScoreEntry.kt # top 5 (puro, testável)
-│       │   │   ├── audio/Feedback.kt # sequências de som e vibração
+│       │   │   ├── audio/
+│       │   │   │   ├── Feedback.kt      # efeitos e vibração
+│       │   │   │   ├── ChiptuneSynth.kt # composição e síntese PCM
+│       │   │   │   └── MusicPlayer.kt   # loop, foco e AudioTrack
 │       │   │   └── ui/
 │       │   │       ├── GameScreen.kt # telas, overlays, loop
 │       │   │       ├── Board.kt      # desenho no Canvas
@@ -176,8 +195,9 @@ snakeman/
 │       │   │       └── theme/Theme.kt
 │       │   └── res/                  # temas, cores, ícones vetoriais
 │       └── test/java/dev/matheus/snakeman/
-│           ├── game/SnakeEngineTest.kt  # 17 testes
-│           └── data/ScoreBoardTest.kt   # 6 testes
+│           ├── game/SnakeEngineTest.kt    # 17 testes
+│           ├── data/ScoreBoardTest.kt     # 6 testes
+│           └── audio/ChiptuneSynthTest.kt # 6 testes
 ├── gradle/wrapper/                  # Gradle 8.11.1
 ├── screenshots/                     # capturas usadas neste README
 ├── keystore/                        # 🔒 NÃO versionado (assinatura)
@@ -214,7 +234,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 ### Comandos
 
 ```bash
-./gradlew testDebugUnitTest   # 23 testes unitários (JVM)
+./gradlew testDebugUnitTest   # 29 testes unitários (JVM)
 ./gradlew lintDebug           # Android Lint (0 erros)
 ./gradlew assembleDebug       # APK de debug
 ./gradlew assembleRelease     # APK de release assinado
@@ -231,7 +251,7 @@ app/build/outputs/apk/release/app-release.apk
 
 ## ✅ Testes
 
-Os testes rodam na JVM porque `game/` e `ScoreEntry` não tocam em APIs do Android.
+Os testes rodam na JVM porque `game/`, `ScoreEntry` e `ChiptuneSynth` não tocam em APIs do Android.
 
 ```bash
 ./gradlew testDebugUnitTest
@@ -246,6 +266,10 @@ bloqueio de 180°, curva de velocidade, pausa/retomada, reset, maçã dourada
 **ScoreBoardTest (6)** — top 5, desempate por data, round-trip de encode/decode,
 robustez contra dados corrompidos e cálculo do recorde.
 
+**ChiptuneSynthTest (6)** — duração do loop, pico e média audíveis sem clipping,
+emenda em silêncio nas pontas, jingle de recorde maior que o normal, jingle de
+vitória e determinismo da síntese.
+
 O motor expõe `loadForTest(...)` (internal) para montar cenários determinísticos
 sem depender de aleatoriedade.
 
@@ -257,11 +281,11 @@ Build de release pronto para instalar — ou baixe direto da
 [última release](https://github.com/Mati-Pereira/snake-man/releases/latest):
 
 ```
-dist/SnakeMan-1.1-release.apk
+dist/SnakeMan-1.2-release.apk
 ```
 
 ```bash
-adb install -r dist/SnakeMan-1.1-release.apk
+adb install -r dist/SnakeMan-1.2-release.apk
 ```
 
 (Se você vem da versão de debug, desinstale antes — a chave de assinatura é diferente:
@@ -328,7 +352,8 @@ Notas do ambiente onde o projeto foi desenvolvido:
 | Motor em Kotlin puro | testes rápidos, determinísticos e sem emulador |
 | Snapshot imutável | integração previsível com Compose, sem estado parcial |
 | Canvas em vez de widgets | 400 células redesenhando a 5–14 Hz sem custo de layout |
-| `ToneGenerator` | sons sem assets, APK pequeno, zero licenciamento |
+| `ToneGenerator` | efeitos sem assets, APK pequeno, zero licenciamento |
+| Síntese própria em PCM | trilha original de 32 s sem assets, licenciamento ou peso no APK |
 | SharedPreferences | dados minúsculos (recorde + 5 linhas) e síncronos, sem schema |
 | `configChanges` na Activity | evita recriar o jogo em mudanças de configuração |
 | Fila de 2 direções | absorve swipes rápidos sem virar 180° por engano |
