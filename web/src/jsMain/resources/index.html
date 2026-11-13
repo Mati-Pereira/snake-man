@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B1220">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%234CD964'/%3E%3C/svg%3E">
 <title>Snake Man — demo no navegador</title>
 <style>
     :root {
@@ -88,7 +89,8 @@
 
     #board { display: block; width: 100%; height: 100%; }
 
-    .overlay { position: absolute; inset: 0; }
+    .overlay { position: absolute; inset: 0; pointer-events: none; }
+    .overlay .scrim { pointer-events: auto; }
     .hidden { display: none !important; }
 
     .scrim {

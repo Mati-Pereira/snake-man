@@ -5,7 +5,7 @@ import dev.matheus.snakeman.data.ScoreEntry
 import dev.matheus.snakeman.game.WallMode
 import kotlinx.browser.window
 
-/** Equivalente web do `Prefs`: mesma chaveia, mas em localStorage. */
+/** Equivalente web do `Prefs`: mesmas chaves, mas em localStorage. */
 class WebPrefs {
 
     private val storage = window.localStorage

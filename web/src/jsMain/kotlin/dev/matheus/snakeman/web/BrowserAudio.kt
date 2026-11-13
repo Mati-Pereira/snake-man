@@ -21,6 +21,7 @@ class BrowserAudio {
     private val victoryBuffer: dynamic by lazy { toBuffer(ChiptuneSynth.victory()) }
 
     private var loopNode: dynamic = null
+    private var jingleNode: dynamic = null
     private var loopStartedAt = 0.0
     private var loopOffset = 0.0
 
@@ -38,6 +39,7 @@ class BrowserAudio {
 
     fun playLoop() {
         if (context == null || loopNode != null) return
+        stopJingle()
         unlock()
         val c = context
         val buffer = loopBuffer
@@ -68,9 +70,15 @@ class BrowserAudio {
     }
 
     fun stop() {
-        loopNode?.let { runCatching { it.stop() } }
+        if (loopNode != null) runCatching { loopNode.stop() }
         loopNode = null
         loopOffset = 0.0
+        stopJingle()
+    }
+
+    private fun stopJingle() {
+        if (jingleNode != null) runCatching { jingleNode.stop() }
+        jingleNode = null
     }
 
     fun playGameOver(newRecord: Boolean) {
@@ -98,11 +106,11 @@ class BrowserAudio {
     }
 
     fun death() {
-        vibrate("navigator.vibrate ? navigator.vibrate(180) : false")
+        js("navigator.vibrate ? navigator.vibrate(180) : false")
     }
 
     fun win() {
-        vibrate("navigator.vibrate ? navigator.vibrate([0,35,55,35,55,80]) : false")
+        js("navigator.vibrate ? navigator.vibrate([0,35,55,35,55,80]) : false")
     }
 
     private fun playOnce(buffer: dynamic) {
@@ -117,6 +125,7 @@ class BrowserAudio {
         source.connect(gain)
         gain.connect(c.destination)
         source.start(0.0)
+        jingleNode = source
     }
 
     private fun tone(freq: Double, millis: Int, volume: Double) {
@@ -135,10 +144,6 @@ class BrowserAudio {
         gain.connect(c.destination)
         oscillator.start(now)
         oscillator.stop(end)
-    }
-
-    private fun vibrate(code: String) {
-        js(code)
     }
 
     private fun toBuffer(samples: ShortArray): dynamic {

@@ -78,6 +78,28 @@ A música é **original e gerada em tempo real**, sem nenhum arquivo de áudio:
 
 ---
 
+## 🌐 Demo no navegador
+
+O módulo `:web` compila **o mesmo motor (`SnakeEngine`) e o mesmo sintetizador
+(`ChiptuneSynth`)** do app para JavaScript. As regras e o áudio são literalmente
+os mesmos arquivos Kotlin; só a camada de tela/entrada foi reescrita em Canvas 2D
+e Web Audio. Nada disso entra no APK.
+
+```bash
+./gradlew :web:webDemo                         # gera dist/web/snake-man/
+python3 -m http.server -d dist/web/snake-man 8080
+# abra http://localhost:8080
+```
+
+- **Teclado**: setas ou WASD para virar, `Espaço` pausa, `M` liga/desliga a música.
+- **Mouse/touch**: D-pad e swipe, iguais aos do app.
+- Recorde, placar e preferência de música ficam no `localStorage`.
+- Precisa de Node.js instalado (o Gradle usa o Node do sistema).
+
+![Demo no navegador](screenshots/web-demo.png)
+
+---
+
 ## ✨ Funcionalidades
 
 - **Grid 20×20** com maçã sempre em célula livre
@@ -238,6 +260,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 ./gradlew lintDebug           # Android Lint (0 erros)
 ./gradlew assembleDebug       # APK de debug
 ./gradlew assembleRelease     # APK de release assinado
+./gradlew :web:webDemo        # demo jogável em dist/web/snake-man
 ```
 
 Saídas:
