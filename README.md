@@ -23,7 +23,7 @@ e a UI é só uma projeção do estado do motor.
 | | |
 |---|---|
 | ![Menu](screenshots/menu.png) | ![Jogando](screenshots/gameplay.png) |
-| Menu: modo, música, jogar e recordes | Jogando: maçã dourada com anel de tempo |
+| Menu: modo, música, jogar e recordes | Jogando: D-pad grande centralizado, botões acima |
 | ![Pausa](screenshots/paused.png) | ![Recordes](screenshots/recordes.png) |
 | Pausa: música e controles | Placar top 5 |
 | ![Game over](screenshots/gameover.png) | |
@@ -78,10 +78,34 @@ A música é **original e gerada em tempo real**, sem nenhum arquivo de áudio:
 
 ---
 
+## 🌐 Demo no navegador
+
+O módulo `:web` compila **o mesmo motor (`SnakeEngine`) e o mesmo sintetizador
+(`ChiptuneSynth`)** do app para JavaScript. As regras e o áudio são literalmente
+os mesmos arquivos Kotlin; só a camada de tela/entrada foi reescrita em Canvas 2D
+e Web Audio. Nada disso entra no APK.
+
+```bash
+./gradlew :web:webDemo                         # gera dist/web/snake-man/
+python3 -m http.server -d dist/web/snake-man 8080
+# abra http://localhost:8080
+```
+
+- **Teclado**: setas ou WASD para virar, `Espaço` pausa, `M` liga/desliga a música.
+- **Mouse/touch**: D-pad e swipe, iguais aos do app.
+- Recorde, placar e preferência de música ficam no `localStorage`.
+- Precisa de Node.js instalado (o Gradle usa o Node do sistema).
+
+![Demo no navegador](screenshots/web-demo.png)
+
+---
+
 ## ✨ Funcionalidades
 
 - **Grid 20×20** com maçã sempre em célula livre
 - **Swipe** com limiar de 24 dp e **D-pad** na tela
+- **D-pad grande em cruz na base**, com os botões de pausa/novo jogo/menu
+  numa linha logo acima — pensado para jogar com os dois polegares
 - Fila de direções (até 2) que **bloqueia viradas de 180°** e evita auto-colisão acidental
 - **Maçã dourada**: uma a cada 5 maçãs, vale 30 pontos e mostra o tempo restante
   num anel que se esvazia
@@ -238,6 +262,7 @@ export PATH=$JAVA_HOME/bin:$PATH
 ./gradlew lintDebug           # Android Lint (0 erros)
 ./gradlew assembleDebug       # APK de debug
 ./gradlew assembleRelease     # APK de release assinado
+./gradlew :web:webDemo        # demo jogável em dist/web/snake-man
 ```
 
 Saídas:

@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -220,97 +221,106 @@ fun SnakeManApp() {
         return
     }
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 18.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
-        Header(score = snapshot.score, highScore = highScore)
+        // O D-pad ocupa a base da tela: braço grande o bastante para o polegar,
+        // mas sem esmagar o tabuleiro em telas baixas.
+        val padArm = minOf(maxWidth * 0.21f, maxHeight * 0.12f).coerceIn(56.dp, 88.dp)
 
-        BoxWithConstraints(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val side = minOf(maxWidth, maxHeight)
-            Box(
+            Header(score = snapshot.score, highScore = highScore)
+
+            BoxWithConstraints(
                 modifier = Modifier
-                    .size(side)
-                    .clip(RoundedCornerShape(20.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
-                    .swipeToSteer { steer(it) }
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
             ) {
-                GameBoard(
-                    snapshot = snapshot,
-                    cols = engine.cols,
-                    rows = engine.rows,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                when (snapshot.status) {
-                    GameStatus.MENU -> MenuOverlay(
-                        mode = menuMode,
-                        highScore = highScore,
-                        musicEnabled = musicEnabled,
-                        onToggleMusic = toggleMusic,
-                        onModeChange = { menuMode = it },
-                        onPlay = { startGame(menuMode) },
-                        onScores = { showScores = true }
+                val side = minOf(maxWidth, maxHeight)
+                Box(
+                    modifier = Modifier
+                        .size(side)
+                        .clip(RoundedCornerShape(20.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+                        .swipeToSteer { steer(it) }
+                ) {
+                    GameBoard(
+                        snapshot = snapshot,
+                        cols = engine.cols,
+                        rows = engine.rows,
+                        modifier = Modifier.fillMaxSize()
                     )
 
-                    GameStatus.PAUSED -> PausedOverlay(
-                        score = snapshot.score,
-                        musicEnabled = musicEnabled,
-                        onToggleMusic = toggleMusic,
-                        onResume = resumeGame,
-                        onRestart = { startGame(menuMode) },
-                        onMenu = backToMenu
-                    )
+                    when (snapshot.status) {
+                        GameStatus.MENU -> MenuOverlay(
+                            mode = menuMode,
+                            highScore = highScore,
+                            musicEnabled = musicEnabled,
+                            onToggleMusic = toggleMusic,
+                            onModeChange = { menuMode = it },
+                            onPlay = { startGame(menuMode) },
+                            onScores = { showScores = true }
+                        )
 
-                    GameStatus.GAME_OVER -> GameOverOverlay(
-                        score = snapshot.score,
-                        highScore = highScore,
-                        newRecord = newRecord,
-                        boardFull = boardFull,
-                        onRestart = { startGame(menuMode) },
-                        onMenu = backToMenu,
-                        onScores = { showScores = true }
-                    )
+                        GameStatus.PAUSED -> PausedOverlay(
+                            score = snapshot.score,
+                            musicEnabled = musicEnabled,
+                            onToggleMusic = toggleMusic,
+                            onResume = resumeGame,
+                            onRestart = { startGame(menuMode) },
+                            onMenu = backToMenu
+                        )
 
-                    GameStatus.PLAYING -> Unit
+                        GameStatus.GAME_OVER -> GameOverOverlay(
+                            score = snapshot.score,
+                            highScore = highScore,
+                            newRecord = newRecord,
+                            boardFull = boardFull,
+                            onRestart = { startGame(menuMode) },
+                            onMenu = backToMenu,
+                            onScores = { showScores = true }
+                        )
+
+                        GameStatus.PLAYING -> Unit
+                    }
                 }
             }
-        }
 
-        when (snapshot.status) {
-            GameStatus.PLAYING, GameStatus.PAUSED -> ControlBar(
-                paused = snapshot.status == GameStatus.PAUSED,
-                onDirection = steer,
-                onPauseToggle = { if (snapshot.status == GameStatus.PLAYING) pauseGame() else resumeGame() },
-                onRestart = { startGame(menuMode) },
-                onMenu = backToMenu
-            )
+            when (snapshot.status) {
+                GameStatus.PLAYING, GameStatus.PAUSED -> PlayControls(
+                    paused = snapshot.status == GameStatus.PAUSED,
+                    armSize = padArm,
+                    onDirection = steer,
+                    onPauseToggle = { if (snapshot.status == GameStatus.PLAYING) pauseGame() else resumeGame() },
+                    onRestart = { startGame(menuMode) },
+                    onMenu = backToMenu
+                )
 
-            else -> Text(
-                text = buildString {
-                    if ((if (snapshot.status == GameStatus.MENU) menuMode else snapshot.wallMode) == WallMode.WRAP) {
-                        append("MODO ATRAVESSA · bordas dão a volta")
-                    } else {
-                        append("MODO PAREDES · cuidado com as bordas")
-                    }
-                    append("  ·  dourada = 30")
-                },
-                color = Gold,
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                letterSpacing = 0.5.sp,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+                else -> Text(
+                    text = buildString {
+                        if ((if (snapshot.status == GameStatus.MENU) menuMode else snapshot.wallMode) == WallMode.WRAP) {
+                            append("MODO ATRAVESSA · bordas dão a volta")
+                        } else {
+                            append("MODO PAREDES · cuidado com as bordas")
+                        }
+                        append("  ·  dourada = 30")
+                    },
+                    color = Gold,
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace,
+                    letterSpacing = 0.5.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
         }
     }
 }
@@ -358,26 +368,43 @@ private fun Stat(label: String, value: Int) {
 }
 
 @Composable
-private fun ControlBar(
+private fun PlayControls(
     paused: Boolean,
+    armSize: Dp,
     onDirection: (Direction) -> Unit,
     onPauseToggle: () -> Unit,
     onRestart: () -> Unit,
     onMenu: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        DirectionPad(onDirection = onDirection, buttonSize = 52.dp)
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ArcadeButton(if (paused) "CONTINUAR" else "PAUSAR", onPauseToggle, width = 112.dp)
-            ArcadeButton("NOVO JOGO", onRestart, width = 112.dp)
-            ArcadeButton("MENU", onMenu, width = 112.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ArcadeButton(
+                text = if (paused) "CONTINUAR" else "PAUSAR",
+                onClick = onPauseToggle,
+                modifier = Modifier.weight(1f),
+                height = 42.dp
+            )
+            ArcadeButton(
+                text = "NOVO JOGO",
+                onClick = onRestart,
+                modifier = Modifier.weight(1f),
+                height = 42.dp
+            )
+            ArcadeButton(
+                text = "MENU",
+                onClick = onMenu,
+                modifier = Modifier.weight(1f),
+                height = 42.dp
+            )
         }
+        DirectionPad(onDirection = onDirection, armSize = armSize)
     }
 }
 

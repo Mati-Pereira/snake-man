@@ -39,6 +39,7 @@ Sempre use o wrapper (`./gradlew`), nunca um `gradle` global — o projeto fixa 
 | Lint | `./gradlew lintDebug` |
 | APK debug | `./gradlew assembleDebug` |
 | APK release assinado | `./gradlew assembleRelease` |
+| Demo web (navegador) | `./gradlew :web:webDemo` → `dist/web/snake-man/` |
 | Tudo junto | `./gradlew testDebugUnitTest lintDebug assembleRelease` |
 | Relatório de testes | `app/build/reports/tests/testDebugUnitTest/index.html` |
 
@@ -66,7 +67,20 @@ app/src/main/java/dev/matheus/snakeman/
     ├── Board.kt          Canvas: grid, maçã comum/dourada, cobra, olhos
     ├── Controls.kt       DirectionPad + Modifier.swipeToSteer
     └── theme/Theme.kt    cores e MaterialTheme
+
+web/src/jsMain/
+├── kotlin/.../web/
+│   ├── Main.kt          estados, loop, overlays e DOM
+│   ├── BoardRenderer.kt Canvas 2D — espelho de ui/Board.kt
+│   ├── BrowserAudio.kt  Web Audio com o MESMO PCM do ChiptuneSynth
+│   └── WebPrefs.kt      localStorage no lugar de SharedPreferences
+└── resources/index.html markup + CSS da demo
 ```
+
+O módulo `:web` não tem código de regra próprio: ele compila `game/`,
+`data/ScoreEntry.kt` e `audio/ChiptuneSynth.kt` direto do módulo `app`
+(veja `web/build.gradle.kts`). Se algum desses arquivos ganhar um import de
+`android.*`, a demo quebra — é o alarme de pureza.
 
 Onde mexer para cada tipo de mudança:
 
@@ -82,6 +96,8 @@ Onde mexer para cada tipo de mudança:
 | botão MÚSICA ON/OFF | `ui/GameScreen.kt` + `data/Prefs.kt` |
 | persistência | `data/Prefs.kt` |
 | cores/tema | `ui/theme/Theme.kt` |
+| visual do demo web | `web/src/jsMain/.../BoardRenderer.kt` + `index.html` |
+| áudio do demo web | `web/src/jsMain/.../BrowserAudio.kt` |
 
 ---
 

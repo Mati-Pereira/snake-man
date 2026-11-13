@@ -28,3 +28,19 @@ kotlin {
         }
     }
 }
+
+/**
+ * Monta o demo jogável em `dist/web/snake-man/` (index.html + snake-man.js).
+ * Abra com `python3 -m http.server -d dist/web/snake-man 8080`.
+ */
+val webDemo by tasks.registering(Copy::class) {
+    group = "distribution"
+    description = "Monta o demo web em dist/web/snake-man."
+    dependsOn("jsBrowserProductionWebpack")
+
+    from("src/jsMain/resources")
+    from(layout.buildDirectory.dir("kotlin-webpack/js/productionExecutable")) {
+        include("snake-man.js")
+    }
+    into(rootProject.layout.projectDirectory.dir("dist/web/snake-man"))
+}
