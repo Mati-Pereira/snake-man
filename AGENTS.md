@@ -10,9 +10,10 @@ Leia antes de editar. O objetivo é preservar a arquitetura e não vazar segredo
 Jogo da cobra para Android, Kotlin + Jetpack Compose, sem dependências de terceiros.
 A regra estrutural mais importante:
 
-> **`game/` e `data/ScoreEntry.kt` são Kotlin puro. Não importe nada de `android.*` neles.**
+> **`game/`, `data/ScoreEntry.kt` e `audio/ChiptuneSynth.kt` são Kotlin puro.
+> Não importe nada de `android.*` neles.**
 
-Isso mantém a lógica testável na JVM (23 testes) sem Robolectric nem emulador.
+Isso mantém a lógica e a síntese testáveis na JVM (29 testes) sem Robolectric nem emulador.
 
 ---
 
@@ -54,9 +55,12 @@ app/src/main/java/dev/matheus/snakeman/
 │   ├── GameModels.kt     Direction, WallMode, GameStatus, Cell, Apple, GameSnapshot
 │   └── SnakeEngine.kt    REGRAS: tick, colisão, wrap, maçã dourada, velocidade
 ├── data/
-│   ├── Prefs.kt          SharedPreferences: highScore, wallMode, scores
+│   ├── Prefs.kt          SharedPreferences: highScore, wallMode, musicEnabled, scores
 │   └── ScoreEntry.kt     ScoreBoard (top 5) — lógica pura + encode/decode
-├── audio/Feedback.kt     ToneGenerator + Handler + Vibrator
+├── audio/
+│   ├── Feedback.kt       ToneGenerator + Handler + Vibrator (efeitos)
+│   ├── ChiptuneSynth.kt  composição + síntese PCM (Kotlin puro, testável)
+│   └── MusicPlayer.kt    AudioTrack, loop, foco de áudio e ciclo de vida
 └── ui/
     ├── GameScreen.kt     telas, overlays, loop de ticks, placar
     ├── Board.kt          Canvas: grid, maçã comum/dourada, cobra, olhos
@@ -73,6 +77,9 @@ Onde mexer para cada tipo de mudança:
 | botões, swipe, D-pad | `ui/Controls.kt` |
 | layout, overlays, textos, placar | `ui/GameScreen.kt` |
 | sons/vibração | `audio/Feedback.kt` |
+| música de fundo (melodia, arranjo, timbres) | `audio/ChiptuneSynth.kt` |
+| reprodução, loop, pausa, foco de áudio | `audio/MusicPlayer.kt` |
+| botão MÚSICA ON/OFF | `ui/GameScreen.kt` + `data/Prefs.kt` |
 | persistência | `data/Prefs.kt` |
 | cores/tema | `ui/theme/Theme.kt` |
 
@@ -111,6 +118,8 @@ Detalhes que já foram decididos e testados — **não "conserte" sem pedir**:
 - Cores sempre via `ui/theme/Theme.kt`, nunca hex solto na UI.
 - Novas regras de jogo → método no `SnakeEngine` + teste em `SnakeEngineTest`.
 - Novas regras de dados → função pura em `ScoreEntry.kt` + teste em `ScoreBoardTest`.
+- Novas músicas/timbres → `ChiptuneSynth.kt` (dados de notas em Kotlin, sem assets) + teste.
+- `MusicPlayer.kt` é a única camada de áudio que pode tocar em `AudioTrack`/`AudioManager`.
 - Composables privados no mesmo arquivo; evite criar arquivos novos sem necessidade.
 
 ---

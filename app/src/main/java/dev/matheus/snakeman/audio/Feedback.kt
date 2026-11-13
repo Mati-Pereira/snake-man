@@ -49,19 +49,14 @@ class Feedback(context: Context) {
         vibratePattern(longArrayOf(0, 25, 30, 30))
     }
 
-    /** Game over: três notas descendentes. */
+    /** Game over: a música conta a história; aqui fica só o impacto físico. */
     fun death() {
-        tone(ToneGenerator.TONE_PROP_ACK, 90)
-        later(110) { tone(ToneGenerator.TONE_PROP_BEEP, 110) }
-        later(220) { tone(ToneGenerator.TONE_SUP_ERROR, 240) }
         vibrate(180)
     }
 
-    /** Novo recorde: fanfarra curta. */
-    fun fanfare() {
-        later(120) { tone(ToneGenerator.TONE_PROP_BEEP2, 80) }
-        later(210) { tone(ToneGenerator.TONE_PROP_ACK, 90) }
-        later(310) { tone(ToneGenerator.TONE_PROP_BEEP, 160) }
+    /** Tabuleiro completo: comemoração curta em três pulsos. */
+    fun win() {
+        vibratePattern(longArrayOf(0, 35, 55, 35, 55, 80))
     }
 
     fun click() {
