@@ -306,11 +306,11 @@ Build de release pronto para instalar — ou baixe direto da
 [última release](https://github.com/Mati-Pereira/snake-man/releases/latest):
 
 ```
-dist/SnakeMan-1.2-release.apk
+dist/SnakeMan-1.3-release.apk
 ```
 
 ```bash
-adb install -r dist/SnakeMan-1.2-release.apk
+adb install -r dist/SnakeMan-1.3-release.apk
 ```
 
 (Se você vem da versão de debug, desinstale antes — a chave de assinatura é diferente:
