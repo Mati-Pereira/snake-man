@@ -4,6 +4,9 @@
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202024.10-4285F4?logo=jetpackcompose&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-23%20passing-success)
+![Release](https://img.shields.io/github/v/release/Mati-Pereira/snake-man?label=release)
+
+**[⬇️ Baixar o APK mais recente](https://github.com/Mati-Pereira/snake-man/releases/latest)** · Android 7.0+ · 6,3 MB
 
 Jogo da cobra (Snake) para Android, escrito em **Kotlin + Jetpack Compose**.
 Interface arcade escura, controle por swipe ou D-pad, maçã dourada com tempo,
@@ -250,7 +253,8 @@ sem depender de aleatoriedade.
 
 ## 📦 APK
 
-Build de release pronto para instalar:
+Build de release pronto para instalar — ou baixe direto da
+[última release](https://github.com/Mati-Pereira/snake-man/releases/latest):
 
 ```
 dist/SnakeMan-1.1-release.apk
