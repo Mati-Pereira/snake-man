@@ -189,6 +189,12 @@ git check-ignore -v keystore/ local.properties dist/ 2>/dev/null
 
 - `versionCode`/`versionName` ficam em `app/build.gradle.kts` (módulo `app`).
 - Suba **os dois** a cada release publicada.
+- Tag `v*` dispara `.github/workflows/release.yml`: testes + lint + APK assinado
+  publicado como GitHub Release. A tag precisa bater com `versionName`
+  (`v1.3` ↔ `"1.3"`), senão o workflow falha antes do build.
+- O CI reconstrói o `.jks` e o `keystore.properties` a partir dos secrets
+  `KEYSTORE_BASE64`, `KEYSTORE_STORE_PASSWORD`, `KEYSTORE_KEY_ALIAS` e
+  `KEYSTORE_KEY_PASSWORD`.
 - A assinatura é lida de `keystore/keystore.properties`; se ausente, cai para debug.
 - Verifique o APK:
 
