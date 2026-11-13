@@ -23,7 +23,7 @@ e a UI é só uma projeção do estado do motor.
 | | |
 |---|---|
 | ![Menu](screenshots/menu.png) | ![Jogando](screenshots/gameplay.png) |
-| Menu: modo, música, jogar e recordes | Jogando: maçã dourada com anel de tempo |
+| Menu: modo, música, jogar e recordes | Jogando: D-pad grande centralizado, botões acima |
 | ![Pausa](screenshots/paused.png) | ![Recordes](screenshots/recordes.png) |
 | Pausa: música e controles | Placar top 5 |
 | ![Game over](screenshots/gameover.png) | |
@@ -104,6 +104,8 @@ python3 -m http.server -d dist/web/snake-man 8080
 
 - **Grid 20×20** com maçã sempre em célula livre
 - **Swipe** com limiar de 24 dp e **D-pad** na tela
+- **D-pad grande em cruz na base**, com os botões de pausa/novo jogo/menu
+  numa linha logo acima — pensado para jogar com os dois polegares
 - Fila de direções (até 2) que **bloqueia viradas de 180°** e evita auto-colisão acidental
 - **Maçã dourada**: uma a cada 5 maçãs, vale 30 pontos e mostra o tempo restante
   num anel que se esvazia
