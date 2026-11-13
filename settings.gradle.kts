@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SnakeMan"
 include(":app")
+include(":web")

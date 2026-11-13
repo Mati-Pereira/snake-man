@@ -305,8 +305,9 @@ keyPassword=********
 ```
 
 - **Nada disso é versionado** (`keystore/`, `*.jks` e `*.properties` estão no `.gitignore`).
-- Se o arquivo não existir (clone novo, CI), o build **cai para a chave de debug**
+- Se o arquivo não existir (clone novo), o build **cai para a chave de debug**
   em vez de falhar — assim qualquer pessoa consegue compilar.
+- No CI, a keystore é reconstruída a partir dos secrets do repositório (abaixo).
 - Assinatura: **APK Signature Scheme v2 + v3**; keystore RSA 4096, validade ~27 anos.
 
 Conferir a assinatura:
@@ -318,9 +319,42 @@ $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose --print-certs \
 
 ### Publicar uma atualização
 
-1. Suba `versionCode` e `versionName` em `app/build.gradle.kts`.
-2. `./gradlew assembleRelease`.
-3. Publique o novo APK mantendo a **mesma keystore**.
+O workflow [`.github/workflows/release.yml`](.github/workflows/release.yml)
+roda testes e lint, gera o APK assinado e publica a release quando uma tag `v*`
+é empurrada. A tag precisa bater com o `versionName` (ex.: `v1.3` ↔ `"1.3"`),
+senão o workflow falha antes do build.
+
+1. Suba `versionCode` e `versionName` em `app/build.gradle.kts` e faça commit.
+2. Crie e empurre a tag:
+
+   ```bash
+   git tag v1.3
+   git push origin v1.3
+   ```
+
+3. Acompanhe em **Actions → Release**. O APK aparece em **Releases** como
+   `SnakeMan-1.3-release.apk`, com as notas geradas automaticamente pelo GitHub
+   (dá para editar depois).
+
+O build local continua igual: `./gradlew assembleRelease`.
+
+#### Secrets do workflow
+
+O CI precisa de quatro secrets do repositório (**Settings → Secrets and
+variables → Actions**):
+
+| Secret | Conteúdo |
+|---|---|
+| `KEYSTORE_BASE64` | `keystore/snakeman-release.jks` em base64 |
+| `KEYSTORE_STORE_PASSWORD` | `storePassword` |
+| `KEYSTORE_KEY_ALIAS` | `keyAlias` |
+| `KEYSTORE_KEY_PASSWORD` | `keyPassword` |
+
+Para gerar o base64 do keystore:
+
+```bash
+base64 -w0 keystore/snakeman-release.jks
+```
 
 > ⚠️ **Faça backup de `keystore/snakeman-release.jks` + senhas.** Sem ela não é
 > possível atualizar o app em aparelhos que já o têm instalado.
